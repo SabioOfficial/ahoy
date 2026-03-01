@@ -2,10 +2,7 @@ package net.sabio.ahoy.entity;
 
 import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityDimensions;
-import net.minecraft.entity.EntityPose;
-import net.minecraft.entity.EntityType;
+import net.minecraft.entity.*;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.data.DataTracker;
 import net.minecraft.entity.player.PlayerEntity;
@@ -21,7 +18,6 @@ import net.minecraft.util.Hand;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
-import net.sabio.ahoy.Ahoy;
 import net.sabio.ahoy.config.AhoyConfig;
 import net.sabio.ahoy.network.ShipSyncPayload;
 
@@ -143,9 +139,27 @@ public class ShipEntity extends Entity {
     }
 
     private void serverTick() {
+        boolean inWater = this.isTouchingWater();
+        double targetY = getY();
+
+        if (inWater) {
+            targetY = Math.floor(getY()) + 0.2;
+            double currentY = getY();
+            double yDiff = targetY - currentY;
+            double newY = currentY + (yDiff * 0.3);
+            setPosition(getX(), newY, getZ());
+        } else {
+            Vec3d velocity = getVelocity();
+            double gravityVelocity = velocity.y - 0.08;
+            if (gravityVelocity < -3.92) gravityVelocity = -3.92;
+            setVelocity(velocity.x, gravityVelocity, velocity.z);
+            move(MovementType.SELF, getVelocity());
+        }
+
         if (anchored) {
             velocityX *= 0.5;
             velocityZ *= 0.5;
+            broadcastSyncPacket();
             return;
         }
 
@@ -175,7 +189,11 @@ public class ShipEntity extends Entity {
             velocityZ *= scale;
         }
 
-        move(net.minecraft.entity.MovementType.SELF, new Vec3d(velocityX, getVelocity().y, velocityZ));
+        if (inWater) {
+            move(MovementType.SELF, new Vec3d(velocityX, 0, velocityZ));
+        } else {
+            move(MovementType.SELF, new Vec3d(velocityX, getVelocity().y, velocityZ));
+        }
 
         broadcastSyncPacket();
 
