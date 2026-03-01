@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "id": "ahoy",
+  "version": "${version}",
+  "name": "ahoy",
+  "description": "Sail the high seas!",
+  "authors": ["sabio"],
+  "contact": {},
+  "license": "GPL-3.0",
+  "icon": "assets/ahoy/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "fabric-datagen": [
+      "net.sabio.ahoy.datagen.AhoyDataGenerator"
+    ],
+    "main": [
+      "net.sabio.ahoy.Ahoy"
+    ],
+    "client": [
+      "net.sabio.ahoy.client.AhoyClient"
+    ]
+  },
+  "mixins": [
+    "ahoy.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=${loader_version}",
+    "fabric-api": "*",
+    "minecraft": "${minecraft_version}",
+    "java": ">=21",
+    "cloth-config": "*"
+  }
+}
