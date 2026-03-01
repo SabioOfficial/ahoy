@@ -183,8 +183,13 @@ public class ShipEntity extends Entity {
             velocityX += -MathHelper.sin(yawRad) * inputForward * baseSpeed;
             velocityZ += MathHelper.cos(yawRad) * inputForward * baseSpeed;
         }
-        velocityX *= 0.92;
-        velocityZ *= 0.92;
+        if (inWater) {
+            velocityX *= 0.92;
+            velocityZ *= 0.92;
+        } else {
+            velocityX *= 0.3;
+            velocityZ *= 0.3;
+        }
 
         double maxSpeed = sailsUp ? baseSpeed * 6 : baseSpeed * 3;
         double currentSpeed = Math.sqrt(velocityX * velocityX + velocityZ * velocityZ);
