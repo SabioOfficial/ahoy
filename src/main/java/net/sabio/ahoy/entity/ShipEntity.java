@@ -111,6 +111,7 @@ public class ShipEntity extends Entity {
                 player.stopRiding();
             } else {
                 player.startRiding(this);
+                player.setYaw(this.shipYaw);
                 player.sendMessage(Text.translatable("entity.ahoy.ship.boarded"), true);
             }
         }
@@ -224,6 +225,13 @@ public class ShipEntity extends Entity {
             this.setYaw(this.shipYaw);
             interpolationSteps--;
         }
+    }
+
+    @Override
+    protected void updatePassengerPosition(Entity passenger, PositionUpdater positionUpdater) {
+        super.updatePassengerPosition(passenger, positionUpdater);
+        passenger.setYaw(this.shipYaw);
+        passenger.setHeadYaw(this.shipYaw);
     }
 
     private void broadcastSyncPacket() {
