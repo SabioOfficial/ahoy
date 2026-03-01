@@ -31,6 +31,10 @@ public class ShipEntity extends Entity {
     public static final float SHIP_WIDTH = 2.5f;
     public static final float SHIP_HEIGHT = 2.0f;
 
+    public double clientX, clientY, clientZ;
+    public float clientYaw;
+    public int interpolationSteps;
+
     private float inputForward;
     private float inputSideways;
 
@@ -102,7 +106,6 @@ public class ShipEntity extends Entity {
 
     @Override
     public ActionResult interactAt(PlayerEntity player, Vec3d hitPos, Hand hand) {
-        Ahoy.LOGGER.info("interactAt called by " + player.getName().getString());
         if (!this.getEntityWorld().isClient()) {
             if (this.hasPassenger(player)) {
                 player.stopRiding();
@@ -150,7 +153,9 @@ public class ShipEntity extends Entity {
         float turnSpeed = AhoyConfig.get().shipTurnSpeed;
 
         if (inputSideways != 0) {
-            shipYaw += inputSideways * turnSpeed;
+            shipYaw -= inputSideways * turnSpeed;
+            while (shipYaw > 180f) shipYaw -= 360f;
+            while (shipYaw < -180f) shipYaw += 360f;
         }
         setYaw(shipYaw);
 
@@ -179,7 +184,24 @@ public class ShipEntity extends Entity {
     }
 
     private void clientTick() {
-        // visual interpolation is handled in the renderer
+        if (interpolationSteps > 0) {
+            double deltaX = clientX - this.getX();
+            double deltaY = clientY - this.getY();
+            double deltaZ = clientZ - this.getZ();
+            float deltaYaw = clientYaw - this.shipYaw;
+            while (deltaYaw > 180f) deltaYaw -= 360f;
+            while (deltaYaw < -180f) deltaYaw += 360f;
+            this.setPosition(
+                    this.getX() + deltaX / interpolationSteps,
+                    this.getY() + deltaY / interpolationSteps,
+                    this.getZ() + deltaZ / interpolationSteps
+            );
+            this.shipYaw += deltaYaw / interpolationSteps;
+            while (this.shipYaw > 180f) this.shipYaw -= 360f;
+            while (this.shipYaw < -180f) this.shipYaw += 360f;
+            this.setYaw(this.shipYaw);
+            interpolationSteps--;
+        }
     }
 
     private void broadcastSyncPacket() {

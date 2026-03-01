@@ -18,11 +18,13 @@ public final class AhoyClientNetworking {
         ClientPlayNetworking.registerGlobalReceiver(ShipSyncPayload.ID, (payload, context) -> {
             context.client().execute(() -> {
                 if (context.client().world == null) return;
-                Entity entity = Objects.requireNonNull(context.client().world).getEntityById(payload.shipId());
+                Entity entity = context.client().world.getEntityById(payload.shipId());
                 if (entity instanceof ShipEntity ship) {
-                    ship.updateTrackedPosition(payload.x(), payload.y(), payload.z());
-                    ship.setYaw(payload.yaw());
-                    ship.setPitch(payload.pitch());
+                    ship.clientX = payload.x();
+                    ship.clientY = payload.y();
+                    ship.clientZ = payload.z();
+                    ship.clientYaw = payload.yaw();
+                    ship.interpolationSteps = 3;
                     ship.setVelocity(payload.velocityX(), payload.velocityY(), payload.velocityZ());
                 }
             });
