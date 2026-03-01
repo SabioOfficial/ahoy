@@ -20,6 +20,7 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import net.sabio.ahoy.config.AhoyConfig;
 import net.sabio.ahoy.network.ShipSyncPayload;
+import net.sabio.ahoy.registry.AhoyItems;
 
 import java.util.List;
 
@@ -40,6 +41,9 @@ public class ShipEntity extends Entity {
     private double velocityX;
     private double velocityZ;
     private float shipYaw;
+
+    private float shipHealth = 160f;
+    private static final float MAX_SHIP_HEALTH = 160f;
 
     private SimpleInventory inventory;
 
@@ -243,7 +247,7 @@ public class ShipEntity extends Entity {
         this.sailsUp = view.getBoolean("SailsUp", true);
         this.velocityX = view.getDouble("VelocityX", 0.0);
         this.velocityZ = view.getDouble("VelocityZ", 0.0);
-
+        this.shipHealth = view.getFloat("ShipHealth", MAX_SHIP_HEALTH);
         this.inventory = new SimpleInventory(AhoyConfig.get().shipInventorySlots);
         view.getOptionalListReadView("Inventory").ifPresent(invList -> {
             int[] slot = {0};
@@ -264,6 +268,7 @@ public class ShipEntity extends Entity {
         view.putBoolean("SailsUp", sailsUp);
         view.putDouble("VelocityX", velocityX);
         view.putDouble("VelocityZ", velocityZ);
+        view.putFloat("ShipHealth", shipHealth);
 
         WriteView.ListView invList = view.getList("Inventory");
         for (int i = 0; i < inventory.size(); i++) {
@@ -278,7 +283,18 @@ public class ShipEntity extends Entity {
 
     @Override
     public boolean damage(ServerWorld world, DamageSource source, float amount) {
-        return false;
+        if (this.isRemoved()) return false;
+        if (source.getAttacker() instanceof PlayerEntity player && player.isCreative()) {
+            this.discard();
+            return true;
+        }
+
+        shipHealth -= amount;
+        if (shipHealth <= 0) {
+            this.discard();
+            this.dropStack(world, new ItemStack(AhoyItems.SHIP_ITEM));
+        }
+        return true;
     }
 
     public boolean isAnchored() {return anchored;}
