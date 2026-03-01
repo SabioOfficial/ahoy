@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "C": "minecraft:iron_chain",
+    "I": "minecraft:iron_ingot"
+  },
+  "pattern": [
+    " I ",
+    "ICI",
+    "I I"
+  ],
+  "result": {
+    "count": 1,
+    "id": "ahoy:anchor"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "entity.ahoy.ship": "Ship",
+  "entity.ahoy.ship.anchored": "Anchor dropped!",
+  "entity.ahoy.ship.boarded": "Sneak to dismount.",
+  "entity.ahoy.ship.unanchored": "Anchor raised!",
+  "item.ahoy.anchor": "Anchor",
+  "item.ahoy.ballista_bolt": "Ballista Bolt",
+  "item.ahoy.cannon_ball": "Cannon Ball",
+  "item.ahoy.ship": "Starter Ship",
+  "item.ahoy.ship_wheel": "Ship's Wheel",
+  "itemGroup.ahoy.main": "Ahoy"
+}

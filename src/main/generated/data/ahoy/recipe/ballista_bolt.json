@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "I": "minecraft:iron_ingot",
+    "P": "minecraft:stick",
+    "S": "minecraft:string"
+  },
+  "pattern": [
+    "  S",
+    " P ",
+    "I  "
+  ],
+  "result": {
+    "count": 4,
+    "id": "ahoy:ballista_bolt"
+  }
+}

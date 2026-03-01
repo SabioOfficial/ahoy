@@ -3,11 +3,15 @@ package net.sabio.ahoy.item;
 import net.minecraft.entity.SpawnReason;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
-import net.minecraft.item.ItemUsageContext;
+import net.minecraft.item.ItemStack;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.ActionResult;
+import net.minecraft.util.Hand;
+import net.minecraft.util.hit.BlockHitResult;
+import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.RaycastContext;
 import net.minecraft.world.World;
 import net.sabio.ahoy.entity.ShipEntity;
 import net.sabio.ahoy.registry.AhoyEntityTypes;
@@ -18,35 +22,39 @@ public class ShipItem extends Item {
     }
 
     @Override
-    public ActionResult useOnBlock(ItemUsageContext context) {
-        World world = context.getWorld();
-        PlayerEntity player = context.getPlayer();
-        BlockPos pos = context.getBlockPos();
-
-        if (!world.isClient() && player != null) {
+    public ActionResult use(World world, PlayerEntity player, Hand hand) {
+        ItemStack stack = player.getStackInHand(hand);
+        BlockHitResult hit = raycast(world, player, RaycastContext.FluidHandling.SOURCE_ONLY);
+        if (hit.getType() == HitResult.Type.MISS) {
+            return ActionResult.PASS;
+        }
+        if (hit.getType() == HitResult.Type.BLOCK) {
+            BlockHitResult blockHit = hit;
             Vec3d spawnPos = new Vec3d(
-                    pos.getX() + 0.5,
-                    pos.getY() + 1.0,
-                    pos.getZ() + 0.5
+                    blockHit.getPos().x,
+                    blockHit.getPos().y,
+                    blockHit.getPos().z
             );
-
-            ShipEntity ship = AhoyEntityTypes.SHIP.create(
-                    (ServerWorld) world,
-                    null,
-                    pos,
-                    SpawnReason.SPAWN_ITEM_USE,
-                    false,
-                    false
-            );
-            if (ship != null) {
-                ship.setPosition(spawnPos);
-                ship.setYaw(player.getYaw());
-                world.spawnEntity(ship);
-                if (!player.isCreative()) {
-                    context.getStack().decrement(1);
+            if (!world.isClient() && world instanceof ServerWorld serverWorld) {
+                ShipEntity ship = AhoyEntityTypes.SHIP.create(
+                        serverWorld,
+                        null,
+                        BlockPos.ofFloored(spawnPos),
+                        SpawnReason.SPAWN_ITEM_USE,
+                        false,
+                        false
+                );
+                if (ship != null) {
+                    ship.setPosition(spawnPos);
+                    ship.setYaw(player.getYaw());
+                    world.spawnEntity(ship);
+                    if (!player.isCreative()) {
+                        stack.decrement(1);
+                    }
                 }
             }
         }
+
         return ActionResult.SUCCESS;
     }
 }

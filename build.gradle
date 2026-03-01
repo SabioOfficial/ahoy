@@ -12,10 +12,6 @@ base {
 
 repositories {
     maven {
-        name = "TerraformersMC"
-        url = "https://maven.terraformersmc.com/releases"
-    }
-    maven {
         name = "shedaniel"
         url = "https://maven.shedaniel.me/"
     }
@@ -86,4 +82,19 @@ publishing {
         }
     }
     repositories {}
+}
+
+sourceSets {
+    main {
+        resources {
+            srcDirs += [
+                "src/main/resources",
+                "src/generated/resources"
+            ]
+        }
+    }
+}
+
+tasks.withType(ProcessResources).configureEach {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
