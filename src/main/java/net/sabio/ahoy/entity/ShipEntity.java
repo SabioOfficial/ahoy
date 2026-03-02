@@ -3,6 +3,8 @@ package net.sabio.ahoy.entity;
 import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.entity.*;
+import net.minecraft.entity.boss.BossBar;
+import net.minecraft.entity.boss.ServerBossBar;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.data.DataTracker;
 import net.minecraft.entity.player.PlayerEntity;
@@ -24,7 +26,10 @@ import net.sabio.ahoy.network.ShipSyncPayload;
 import net.sabio.ahoy.registry.AhoyItems;
 import org.jspecify.annotations.Nullable;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class ShipEntity extends Entity {
     public static final float SHIP_HEIGHT = 2.0f;
@@ -47,9 +52,12 @@ public class ShipEntity extends Entity {
     private static final float MAX_SHIP_HEALTH = 160f;
 
     private int broadcastTimer = 0;
-    private static final int BROADCAST_INTERVAL = 3;
+    private static final int BROADCAST_INTERVAL = 1;
 
     private SimpleInventory inventory;
+
+    private ServerBossBar bossBar;
+    private final Set<ServerPlayerEntity> mountedPlayers = new HashSet<>();
 
     private static final Vec3d[] SEAT_OFFSETS = {
             new Vec3d(0, 1.2, 0),
@@ -58,10 +66,40 @@ public class ShipEntity extends Entity {
             new Vec3d(0, 1.0, -1.5),
     };
 
+    private void syncBossBarPlayers() {
+        Set<ServerPlayerEntity> current = getPassengerList().stream()
+                .filter(entity -> entity instanceof ServerPlayerEntity)
+                .map(entity -> (ServerPlayerEntity) entity)
+                .collect(Collectors.toSet());
+        for (ServerPlayerEntity player : current) {
+            if (!mountedPlayers.contains(player)) {
+                bossBar.addPlayer(player);
+                updateBossBar();
+            }
+        }
+        for (ServerPlayerEntity player : mountedPlayers) {
+            if (!current.contains(player)) {
+                bossBar.removePlayer(player);
+            }
+        }
+        mountedPlayers.clear();
+        mountedPlayers.addAll(current);
+    }
+
     public ShipEntity(EntityType<?> type, World world) {
         super(type, world);
         this.intersectionChecked = true;
         this.inventory = new SimpleInventory(AhoyConfig.get().shipInventorySlots);
+        this.bossBar = new ServerBossBar(
+                Text.literal("Ship Health"),
+                BossBar.Color.GREEN,
+                BossBar.Style.NOTCHED_10
+        );
+    }
+
+    private void updateBossBar() {
+        float percentage = shipHealth / MAX_SHIP_HEALTH;
+        bossBar.setPercent(percentage);
     }
 
     @Override
@@ -108,6 +146,17 @@ public class ShipEntity extends Entity {
         return new Vec3d(rotatedX, offset.y, rotatedZ);
     }
 
+    @Override
+    public void onStoppedTrackingBy(ServerPlayerEntity player) {
+        bossBar.removePlayer(player);
+    }
+
+    @Override
+    public void remove(RemovalReason reason) {
+        super.remove(reason);
+        if (bossBar != null) bossBar.clearPlayers();
+    }
+
     public Entity getPilot() {
         List<Entity> passengers = this.getPassengerList();
         return passengers.isEmpty() ? null : passengers.getFirst();
@@ -125,6 +174,10 @@ public class ShipEntity extends Entity {
             } else {
                 player.startRiding(this);
                 player.setYaw(this.shipYaw);
+                if (player instanceof ServerPlayerEntity serverPlayer) {
+                    bossBar.addPlayer(serverPlayer);
+                    updateBossBar();
+                }
                 player.sendMessage(Text.translatable("entity.ahoy.ship.boarded"), true);
             }
         }
@@ -141,7 +194,7 @@ public class ShipEntity extends Entity {
         this.anchored = anchored;
         this.sailsUp = sailsUp;
         if (this.interpolationSteps <= 1) {
-            this.interpolationSteps = BROADCAST_INTERVAL + 1;
+            this.interpolationSteps = 1;
         }
     }
 
@@ -171,6 +224,8 @@ public class ShipEntity extends Entity {
     }
 
     private void serverTick() {
+        syncBossBarPlayers();
+
         boolean inWater = this.isTouchingWater();
         double targetY = getY();
 
