@@ -1,6 +1,7 @@
 {
   "entity.ahoy.ship": "Ship",
   "entity.ahoy.ship.anchored": "Anchor dropped!",
+  "entity.ahoy.ship.blocked": "Move to a bigger area to spawn the ship.",
   "entity.ahoy.ship.boarded": "Sneak to dismount.",
   "entity.ahoy.ship.unanchored": "Anchor raised!",
   "item.ahoy.anchor": "Anchor",
