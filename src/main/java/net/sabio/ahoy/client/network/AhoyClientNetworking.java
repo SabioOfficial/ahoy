@@ -10,8 +10,6 @@ import net.sabio.ahoy.network.ShipControlPayload;
 import net.sabio.ahoy.network.ShipSyncPayload;
 import net.sabio.ahoy.network.WeatherUpdatePayload;
 
-import java.util.Objects;
-
 @Environment(EnvType.CLIENT)
 public final class AhoyClientNetworking {
     public static void register() {
@@ -20,12 +18,7 @@ public final class AhoyClientNetworking {
                 if (context.client().world == null) return;
                 Entity entity = context.client().world.getEntityById(payload.shipId());
                 if (entity instanceof ShipEntity ship) {
-                    ship.clientX = payload.x();
-                    ship.clientY = payload.y();
-                    ship.clientZ = payload.z();
-                    ship.clientYaw = payload.yaw();
-                    ship.interpolationSteps = 3;
-                    ship.setVelocity(payload.velocityX(), payload.velocityY(), payload.velocityZ());
+                    ship.applySync(payload.x(), payload.y(), payload.z(), payload.yaw(), payload.velocityX(), payload.velocityY(), payload.velocityZ(), payload.anchored(), payload.sailsUp());
                 }
             });
         });

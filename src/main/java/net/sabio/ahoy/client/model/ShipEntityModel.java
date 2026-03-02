@@ -24,9 +24,9 @@ public class ShipEntityModel extends EntityModel<ShipRenderState> {
         modelPartData.addChild("bb_main",
                 ModelPartBuilder.create()
                         .uv(0, 0)
-                        .cuboid(-40.0F, -16.0F, -16.0F, 80.0F, 16.0F, 32.0F, new Dilation(0.0F)),
-                ModelTransform.origin(0.0F, 24.0F, 0.0F));
-        return TexturedModelData.of(modelData, 128, 64);
+                        .cuboid(-24.0F, -32.0F, -40.0F, 48.0F, 32.0F, 80.0F, new Dilation(0.0F)),
+                ModelTransform.origin(0.0F, 0.0F, 0.0F));
+        return TexturedModelData.of(modelData, 256, 128);
     }
 
     @Override

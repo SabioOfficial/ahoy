@@ -15,17 +15,18 @@ import net.minecraft.storage.WriteView;
 import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
+import net.minecraft.util.math.Box;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import net.sabio.ahoy.config.AhoyConfig;
 import net.sabio.ahoy.network.ShipSyncPayload;
 import net.sabio.ahoy.registry.AhoyItems;
+import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 
 public class ShipEntity extends Entity {
-    public static final float SHIP_WIDTH = 2.5f;
     public static final float SHIP_HEIGHT = 2.0f;
 
     public double clientX, clientY, clientZ;
@@ -44,6 +45,9 @@ public class ShipEntity extends Entity {
 
     private float shipHealth = 160f;
     private static final float MAX_SHIP_HEALTH = 160f;
+
+    private int broadcastTimer = 0;
+    private static final int BROADCAST_INTERVAL = 3;
 
     private SimpleInventory inventory;
 
@@ -66,13 +70,22 @@ public class ShipEntity extends Entity {
     }
 
     @Override
+    public boolean isCollidable(@Nullable Entity entity) {
+        return true;
+    }
+
+    @Override
     protected void initDataTracker(DataTracker.Builder builder) {
         // TODO: data watcher values for anchored/sails state add here
     }
 
     @Override
-    public EntityDimensions getDimensions(EntityPose pose) {
-        return EntityDimensions.fixed(SHIP_WIDTH * 2, SHIP_HEIGHT);
+    protected Box calculateDefaultBoundingBox(Vec3d pos) {
+        double extent = 2.0;
+        return new Box(
+                pos.x - extent, pos.y, pos.z - extent,
+                pos.x + extent, pos.y + SHIP_HEIGHT, pos.z + extent
+        );
     }
 
     @Override
@@ -116,6 +129,20 @@ public class ShipEntity extends Entity {
             }
         }
         return ActionResult.SUCCESS;
+    }
+
+    public void applySync(double x, double y, double z, float yaw, double velocityX, double velocityY, double velocityZ, boolean anchored, boolean sailsUp) {
+        this.clientX = x;
+        this.clientY = y;
+        this.clientZ = z;
+        this.clientYaw = yaw;
+        this.velocityX = velocityX;
+        this.velocityZ = velocityZ;
+        this.anchored = anchored;
+        this.sailsUp = sailsUp;
+        if (this.interpolationSteps <= 1) {
+            this.interpolationSteps = BROADCAST_INTERVAL + 1;
+        }
     }
 
     public void applyControlInput(boolean forward, boolean backward, boolean left, boolean right) {
@@ -205,7 +232,11 @@ public class ShipEntity extends Entity {
             move(MovementType.SELF, new Vec3d(velocityX, getVelocity().y, velocityZ));
         }
 
-        broadcastSyncPacket();
+        broadcastTimer++;
+        if (broadcastTimer >= BROADCAST_INTERVAL) {
+            broadcastSyncPacket();
+            broadcastTimer = 0;
+        }
 
         inputForward = 0;
         inputSideways = 0;
@@ -213,19 +244,17 @@ public class ShipEntity extends Entity {
 
     private void clientTick() {
         if (interpolationSteps > 0) {
-            double deltaX = clientX - this.getX();
-            double deltaY = clientY - this.getY();
-            double deltaZ = clientZ - this.getZ();
-            float deltaYaw = clientYaw - this.shipYaw;
-            while (deltaYaw > 180f) deltaYaw -= 360f;
-            while (deltaYaw < -180f) deltaYaw += 360f;
+            double alpha = 1.0 / interpolationSteps;
             this.setPosition(
-                    this.getX() + deltaX / interpolationSteps,
-                    this.getY() + deltaY / interpolationSteps,
-                    this.getZ() + deltaZ / interpolationSteps
+                    this.getX() + (clientX - this.getX()) * alpha,
+                    this.getY() + (clientY - this.getY()) * alpha,
+                    this.getZ() + (clientZ - this.getZ()) * alpha
             );
-            this.shipYaw += deltaYaw / interpolationSteps;
-            while (this.shipYaw > 180f) this.shipYaw -= 360f;
+            float deltaYaw = clientYaw - this.shipYaw;
+            while (deltaYaw >  180f) deltaYaw -= 360f;
+            while (deltaYaw < -180f) deltaYaw += 360f;
+            this.shipYaw += (float) (deltaYaw * alpha);
+            while (this.shipYaw >  180f) this.shipYaw -= 360f;
             while (this.shipYaw < -180f) this.shipYaw += 360f;
             this.setYaw(this.shipYaw);
             interpolationSteps--;
