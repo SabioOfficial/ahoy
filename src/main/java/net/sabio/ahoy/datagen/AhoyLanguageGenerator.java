@@ -20,6 +20,7 @@ public class AhoyLanguageGenerator extends FabricLanguageProvider {
         builder.add("item.ahoy.ship_wheel", "Ship's Wheel");
         builder.add("entity.ahoy.ship", "Ship");
         builder.add("entity.ahoy.ship.boarded", "Sneak to dismount.");
+        builder.add("entity.ahoy.ship.blocked", "Move to a bigger area to spawn the ship.");
         builder.add("entity.ahoy.ship.anchored", "Anchor dropped!");
         builder.add("entity.ahoy.ship.unanchored", "Anchor raised!");
         builder.add("itemGroup.ahoy.main", "Ahoy");

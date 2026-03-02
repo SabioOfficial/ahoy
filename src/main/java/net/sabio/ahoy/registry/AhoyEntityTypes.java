@@ -19,7 +19,7 @@ public class AhoyEntityTypes {
             Registries.ENTITY_TYPE,
             Identifier.of(Ahoy.MOD_ID, "ship"),
             FabricEntityTypeBuilder.<ShipEntity>create(SpawnGroup.MISC, ShipEntity::new)
-                    .dimensions(EntityDimensions.fixed(5.0f, 2.5f))
+                    .dimensions(EntityDimensions.fixed(4.0f, 2.0f))
                     .trackRangeBlocks(128)
                     .trackedUpdateRate(3)
                     .build(SHIP_KEY)
