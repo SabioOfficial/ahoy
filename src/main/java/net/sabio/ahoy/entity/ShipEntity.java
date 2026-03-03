@@ -60,10 +60,7 @@ public class ShipEntity extends Entity {
     private final Set<ServerPlayerEntity> mountedPlayers = new HashSet<>();
 
     private static final Vec3d[] SEAT_OFFSETS = {
-            new Vec3d(0, 1.2, 0),
-            new Vec3d(1.2, 1.0, 1),
-            new Vec3d(-1.2, 1.0, 1),
-            new Vec3d(0, 1.0, -1.5),
+            new Vec3d(0, 1.0, 0)
     };
 
     private void syncBossBarPlayers() {
@@ -136,14 +133,24 @@ public class ShipEntity extends Entity {
         List<Entity> passengers = this.getPassengerList();
         int index = passengers.indexOf(passenger);
         if (index < 0) index = 0;
-        int seatIdx = Math.min(index, SEAT_OFFSETS.length - 1);
-        Vec3d offset = SEAT_OFFSETS[seatIdx];
-
+        Vec3d offset = SEAT_OFFSETS[Math.min(index, SEAT_OFFSETS.length - 1)];
         float yawRad = this.shipYaw * MathHelper.RADIANS_PER_DEGREE;
         double rotatedX = offset.x * MathHelper.cos(-yawRad) - offset.z * MathHelper.sin(-yawRad);
-        double rotatedZ = offset.x * MathHelper.sin(-yawRad) - offset.z * MathHelper.cos(-yawRad);
-
+        double rotatedZ = offset.x * MathHelper.sin(-yawRad) + offset.z * MathHelper.cos(-yawRad);
         return new Vec3d(rotatedX, offset.y, rotatedZ);
+    }
+
+    @Override
+    protected void updatePassengerPosition(Entity passenger, PositionUpdater positionUpdater) {
+        super.updatePassengerPosition(passenger, positionUpdater);
+        passenger.setYaw(this.shipYaw);
+        passenger.setHeadYaw(this.shipYaw);
+        passenger.lastYaw = this.shipYaw;
+        if (passenger instanceof LivingEntity living) {
+            living.setBodyYaw(this.shipYaw);
+            living.lastBodyYaw = this.shipYaw;
+            living.lastHeadYaw = this.shipYaw;
+        }
     }
 
     @Override
@@ -314,13 +321,6 @@ public class ShipEntity extends Entity {
             this.setYaw(this.shipYaw);
             interpolationSteps--;
         }
-    }
-
-    @Override
-    protected void updatePassengerPosition(Entity passenger, PositionUpdater positionUpdater) {
-        super.updatePassengerPosition(passenger, positionUpdater);
-        passenger.setYaw(this.shipYaw);
-        passenger.setHeadYaw(this.shipYaw);
     }
 
     private void broadcastSyncPacket() {

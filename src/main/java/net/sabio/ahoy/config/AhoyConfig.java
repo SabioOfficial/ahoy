@@ -18,7 +18,7 @@ public class AhoyConfig implements ConfigData {
 
     @ConfigEntry.Category("ship")
     @ConfigEntry.Gui.Tooltip
-    public int shipMaxPassengers = 8;
+    public int shipMaxPassengers = 3;
 
     @ConfigEntry.Category("ship")
     @ConfigEntry.Gui.Tooltip
